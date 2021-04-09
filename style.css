@@ -35,3 +35,55 @@ html,
        top: 10px;
        z-index: 5;
 }
+
+html {
+       box-sizing: border-box;
+       font-size: 100%;
+}
+
+*, *::before, *::after {
+       box-sizing: inherit;
+}
+
+body {
+       margin: 0;
+       padding: 0;
+       background-color: black;
+       color: white;
+}
+
+h1 {
+       font-family: 'Ranchers';
+       text-align: center;
+       font-size: 2rem;
+       padding: 0 3rem;
+       letter-spacing: 0.5rem;
+}
+
+h4 {
+       font-family: 'Ranchers';
+       text-align: center;
+       padding: 0 3rem;
+       letter-spacing: 0.3rem;
+}
+
+#map {
+       height: 80vh;
+}
+
+.gm-style-iw-d {
+       color: black;
+}
+
+.card-image {
+       display: block;
+       margin-left: auto;
+       margin-right: auto;
+       width: 50%;
+       margin-top: 3rem;
+}
+
+.captain {
+       font-size: 1rem;
+       margin: 10% 0% 10% 20%;
+}

@@ -17,7 +17,6 @@ async function initMap() {
   const coordPoints = points[0];
   const names = points[1];
   const locations = coordPoints.map(point => changeCoordSystem(point));
-  console.log(locations);
   // locations = [{ lat: 10.2959051, lng: 123.8876657 }]
   map = new google.maps.Map(document.getElementById("map"), {
     zoom: 13,
@@ -25,7 +24,7 @@ async function initMap() {
     mapTypeId: "satellite",
   });
   heatmap = new google.maps.visualization.HeatmapLayer({
-    data: points,
+    data: coordPoints,
     map: map,
   });
   // const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
@@ -87,8 +86,8 @@ function toggleHeatmap() {
 }
 
 function changeCoordSystem(coord) {
-  x = coord.location.lat();
-  y = coord.location.lng();
+  x = coord.lat();
+  y = coord.lng();
   return { lat: x, lng: y };
 }
 
@@ -168,7 +167,7 @@ async function getCoordinates(hospital) {
     if (response.status === 200) { 
       const x = response.data.results[0].geometry.location.lat;
       const y = response.data.results[0].geometry.location.lng;
-      const coords = {location: new google.maps.LatLng(x, y), weight: 5};
+      const coords = new google.maps.LatLng(x, y);
       return coords;
     }
     return coords;
