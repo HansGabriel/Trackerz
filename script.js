@@ -8,11 +8,15 @@
 
 // This example requires the Visualization library. Include the libraries=visualization
 // parameter when you first load the API. For example:
+
+
 let map, heatmap;
 
 async function initMap() {
   const points = await getPoints();
-  const locations = points.map(point => changeCoordSystem(point));
+  const coordPoints = points[0];
+  const names = points[1];
+  const locations = coordPoints.map(point => changeCoordSystem(point));
   console.log(locations);
   // locations = [{ lat: 10.2959051, lng: 123.8876657 }]
   map = new google.maps.Map(document.getElementById("map"), {
@@ -24,23 +28,59 @@ async function initMap() {
     data: points,
     map: map,
   });
-  const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  // Add some markers to the map.
-  // Note: The code uses the JavaScript Array.prototype.map() method to
-  // create an array of markers based on a given "locations" array.
-  // The map() method here has nothing to do with the Google Maps API.
-  const markers = locations.map((location, i) => {
-    return new google.maps.Marker({
-      position: location,
-      label: labels[i % labels.length],
+  // const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  // // Add some markers to the map.
+  // // Note: The code uses the JavaScript Array.prototype.map() method to
+  // // create an array of markers based on a given "locations" array.
+  // // The map() method here has nothing to do with the Google Maps API.
+  // const markers = locations.map((location, i) => {
+  //   return new google.maps.Marker({
+  //     position: location,
+  //     label: labels[i % labels.length],
+  //   });
+  // });
+  // // Add a marker clusterer to manage the markers.
+  // new MarkerClusterer(map, markers, {
+  //   imagePath:
+  //     "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m",
+  // });
+
+  for (let i = 0; i < locations.length; i++) {
+    const coords = locations[i];
+
+    const marker = new google.maps.Marker({
+        position: coords,
+        map,
+        title: "Hospital",
+        icon: {
+            url: "assets/hospital.svg",
+            scaledSize: new google.maps.Size(38, 31)
+        },
+        animation: google.maps.Animation.DROP,
     });
-  });
-  // Add a marker clusterer to manage the markers.
-  new MarkerClusterer(map, markers, {
-    imagePath:
-      "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m",
-  });
+
+    const contentString = formatInfoCard(capitalizeWords(names[i]), "Some Text", "", "")
+
+    const infowindow = new google.maps.InfoWindow({
+        content: contentString
+    });
+
+    marker.addListener("click", () => {
+        infowindow.open(map, marker);
+    });
+  }
 }
+
+
+
+
+
+
+
+
+
+// Helper Functions
+
 
 function toggleHeatmap() {
   heatmap.setMap(heatmap.getMap() ? null : map);
@@ -50,6 +90,21 @@ function changeCoordSystem(coord) {
   x = coord.location.lat();
   y = coord.location.lng();
   return { lat: x, lng: y };
+}
+
+function formatInfoCard(title, content, image, head) {
+  const contentString =
+  '<div id="content">' +
+  '<div id="siteNotice">' +
+  "</div>" +
+  `<h1 id="firstHeading" class="firstHeading">${title}</h1>` + 
+  '<div id="bodyContent">' +
+  `<span class="captain"> <b>Head: </b> ${head} </span> ` + 
+  `<img class="card-image" src=${image} />` + 
+  `<p>${content}</p>` +
+  "</div>" +
+  "</div>";
+  return contentString;
 }
 
 function changeGradient() {
@@ -80,6 +135,31 @@ function changeOpacity() {
   heatmap.set("opacity", heatmap.get("opacity") ? null : 0.2);
 }
 
+function capitalizeWords(mySentence) {
+  const words = mySentence.split(" ");
+
+  for (let i = 0; i < words.length; i++) {
+      words[i] = words[i][0].toUpperCase() + words[i].substr(1);
+  }
+
+  const res = words.join(" ");
+
+  return res;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+// API Functions
+
 async function getCoordinates(hospital) {
   try {
     let coords;
@@ -89,7 +169,6 @@ async function getCoordinates(hospital) {
       const x = response.data.results[0].geometry.location.lat;
       const y = response.data.results[0].geometry.location.lng;
       const coords = {location: new google.maps.LatLng(x, y), weight: 5};
-      console.log(x, y);
       return coords;
     }
     return coords;
@@ -117,6 +196,5 @@ const getPoints = async () => {
     const coords = await getCoordinates(hospitals[i]);
     coodinateList.push(coords);
   }
-  console.log(coodinateList);
-  return coodinateList;
+  return [coodinateList, hospitals];
 }
