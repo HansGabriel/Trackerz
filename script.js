@@ -16,8 +16,10 @@ async function initMap() {
   const points = await getPoints();
   const coordPoints = points[0];
   const names = points[1];
+  const casesList = points[2];
+
   const locations = coordPoints.map(point => changeCoordSystem(point));
-  // locations = [{ lat: 10.2959051, lng: 123.8876657 }]
+
   map = new google.maps.Map(document.getElementById("map"), {
     zoom: 13,
     center: { lat: 10.7683, lng: 122.5847 },
@@ -27,22 +29,6 @@ async function initMap() {
     data: coordPoints,
     map: map,
   });
-  // const labels = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  // // Add some markers to the map.
-  // // Note: The code uses the JavaScript Array.prototype.map() method to
-  // // create an array of markers based on a given "locations" array.
-  // // The map() method here has nothing to do with the Google Maps API.
-  // const markers = locations.map((location, i) => {
-  //   return new google.maps.Marker({
-  //     position: location,
-  //     label: labels[i % labels.length],
-  //   });
-  // });
-  // // Add a marker clusterer to manage the markers.
-  // new MarkerClusterer(map, markers, {
-  //   imagePath:
-  //     "https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m",
-  // });
 
   for (let i = 0; i < locations.length; i++) {
     const coords = locations[i];
@@ -58,7 +44,7 @@ async function initMap() {
         animation: google.maps.Animation.DROP,
     });
 
-    const contentString = formatInfoCard(capitalizeWords(names[i]), "Some Text", "", "")
+    const contentString = formatInfoCard(capitalizeWords(names[i]), casesList[i])
 
     const infowindow = new google.maps.InfoWindow({
         content: contentString
@@ -91,16 +77,14 @@ function changeCoordSystem(coord) {
   return { lat: x, lng: y };
 }
 
-function formatInfoCard(title, content, image, head) {
+function formatInfoCard(title, content) {
   const contentString =
   '<div id="content">' +
   '<div id="siteNotice">' +
   "</div>" +
   `<h1 id="firstHeading" class="firstHeading">${title}</h1>` + 
   '<div id="bodyContent">' +
-  `<span class="captain"> <b>Head: </b> ${head} </span> ` + 
-  `<img class="card-image" src=${image} />` + 
-  `<p>${content}</p>` +
+  `<span class="captain"> <b>Covid Cases: </b> ${content} </span> ` + 
   "</div>" +
   "</div>";
   return contentString;
@@ -168,6 +152,7 @@ async function getCoordinates(hospital) {
       const x = response.data.results[0].geometry.location.lat;
       const y = response.data.results[0].geometry.location.lng;
       const coords = new google.maps.LatLng(x, y);
+      console.log(x, y);
       return coords;
     }
     return coords;
@@ -188,12 +173,30 @@ const getHospitals = async () => {
   }
 }
 
+const getCovidCasesInHospital = async (hospital) => {
+  try {
+    const formattedHospital = hospital.replace(/\s+/g, '%20');
+    const response = await axios.get(`https://covid19-api-philippines.herokuapp.com/api/facilities/summary?hospital_name=${formattedHospital}`);
+    if (response.status === 200) { 
+      const covidDetails =  response.data.data.beds.covid;
+      const numCovidCases = covidDetails.icu_o + covidDetails.isolbed_o + covidDetails.beds_ward_o;
+
+      return numCovidCases;
+    }
+  } catch (err) {
+    console.log(err)
+  }
+}
+
 const getPoints = async () => {
   const hospitals = await getHospitals();
   let coodinateList = [];
+  let casesList = [];
   for (let i = 0; i < hospitals.length; i++) {
     const coords = await getCoordinates(hospitals[i]);
+    const number = await getCovidCasesInHospital(hospitals[i]);
     coodinateList.push(coords);
+    casesList.push(number);
   }
-  return [coodinateList, hospitals];
+  return [coodinateList, hospitals, casesList];
 }
